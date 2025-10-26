@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Margot's Magical Words ✨</title>
+<style>
+  :root { --pink:#ff4081; --orange:#ff7043; --blue:#42a5f5; --green:#66bb6a; --purple:#ab47bc; --card:#fff3c4; }
+  body { font-family:'Comic Sans MS', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+         background:linear-gradient(180deg,#fceabb 0%, #f8b500 100%); margin:0; padding:0; min-height:100vh; display:grid; place-items:center; }
+  .app { background:white; border-radius:20px; padding:20px; width:92%; max-width:460px; box-shadow:0 6px 18px rgba(0,0,0,.18); text-align:center; }
+  h1 { color:var(--pink); font-size:1.9rem; margin:8px 0 6px; line-height:1.2; }
+  p.sub { margin:0 0 10px; color:#444; }
+  .word-box { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:18px 0 10px; }
+  .word { background:var(--card); border-radius:12px; padding:10px 14px; font-weight:700; font-size:1.15rem; transition:transform .2s;
+          display:inline-flex; align-items:center; gap:6px; }
+  .word:hover { transform:scale(1.06); }
+  .phrase { margin-top:6px; font-weight:700; color:#5c3b00; }
+  button { border:none; border-radius:12px; padding:11px 14px; margin:6px 5px; font-size:1rem; font-weight:700; cursor:pointer; color:white; box-shadow:0 3px 0 rgba(0,0,0,.12); }
+  .generate { background:var(--orange); } .speak { background:var(--blue); } .copy { background:var(--green); } .start-btn { background:var(--purple); font-size:1.15rem; padding:14px 20px; }
+  .mute { background:#6d6dff; }
+  footer { font-size:.8rem; color:#666; margin-top:10px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+  <div id="welcome" class="app">
+    <h1>🪄 Welcome to<br/>Margot's Magical Words ✨</h1>
+    <p class="sub">2 characters • 2 objects • 1 place…</p>
+    <p class="sub"><em>and bear of course!</em> 🐻</p>
+    <button class="start-btn" onclick="startGame()">Start the Magic ✨</button>
+  </div>
+
+  <div id="mainApp" class="app hidden">
+    <h1>Margot's Magical Words ✨</h1>
+    <p class="sub">2 characters • 2 objects • 1 place</p>
+
+    <div class="word-box" id="words">
+      <div class="word">—</div><div class="word">—</div><div class="word">—</div><div class="word">—</div><div class="word">—</div>
+    </div>
+    <div id="alwaysPhrase" class="phrase">…and bear of course!</div>
+
+    <div>
+      <button class="generate" onclick="generateWords()">🎲 Generate</button>
+      <button class="speak" onclick="speakWords()">🔊 Speak</button>
+      <button class="copy" onclick="copyWords()">📋 Copy</button>
+    </div>
+    <div><button id="muteBtn" class="mute" onclick="toggleMute()">🔊 Music: On</button></div>
+
+    <footer>Made with 💖 for kids • Safe for ages 0–16 • Works offline</footer>
+  </div>
+
+<script>
+const characters=[{word:"wizard",emoji:"🧙‍♂️"},{word:"astronaut",emoji:"🧑‍🚀"},{word:"superhero",emoji:"🦸‍♀️"},{word:"detective",emoji:"🕵️‍♂️"},{word:"chef",emoji:"👩‍🍳"},{word:"scientist",emoji:"👩‍🔬"},{word:"pirate",emoji:"🏴‍☠️"},{word:"knight",emoji:"🤺"},{word:"princess",emoji:"👸"},{word:"prince",emoji:"🤴"}];
+const objects=[{word:"book",emoji:"📚"},{word:"compass",emoji:"🧭"},{word:"key",emoji:"🗝️"},{word:"telescope",emoji:"🔭"},{word:"lantern",emoji:"🏮"},{word:"map",emoji:"🗺️"},{word:"backpack",emoji:"🎒"},{word:"paintbrush",emoji:"🖌️"},{word:"pencil",emoji:"✏️"},{word:"guitar",emoji:"🎸"}];
+const places=[{word:"castle",emoji:"🏰"},{word:"forest",emoji:"🌳"},{word:"beach",emoji:"🏖️"},{word:"space station",emoji:"🛰️"},{word:"mountain",emoji:"🏔️"},{word:"city",emoji:"🏙️"},{word:"island",emoji:"🏝️"},{word:"museum",emoji:"🏛️"},{word:"school",emoji:"🏫"},{word:"zoo",emoji:"🦓"}];
+const ALWAYS_PHRASE="and bear of course!";
+function sampleRandom(arr,n){const c=[...arr],r=[];for(let i=0;i<n;i++){const x=Math.floor(Math.random()*c.length);r.push(c.splice(x,1)[0]);}return r;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let audioCtx,bgGain,sfxGain,isMuted=false,bgInterval=null;
+function initAudio(){audioCtx=new (window.AudioContext||window.webkitAudioContext)();bgGain=audioCtx.createGain();bgGain.gain.value=0.12;sfxGain=audioCtx.createGain();sfxGain.gain.value=0.25;bgGain.connect(audioCtx.destination);sfxGain.connect(audioCtx.destination);startBackgroundMusic();}
+function playBell(f,t,d=0.6){const o1=audioCtx.createOscillator(),o2=audioCtx.createOscillator(),g=audioCtx.createGain();o1.type="sine";o2.type="triangle";o1.frequency.setValueAtTime(f,t);o2.frequency.setValueAtTime(f*2,t);g.gain.setValueAtTime(0.001,t);g.gain.exponentialRampToValueAtTime(0.7,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o1.connect(g);o2.connect(g);g.connect(bgGain);o1.start(t);o2.start(t);o1.stop(t+d);o2.stop(t+d);}
+function startBackgroundMusic(){const base=523.25,scale=[0,2,4,7,9].map(s=>base*Math.pow(2,s/12));if(bgInterval)clearInterval(bgInterval);function bar(start){playBell(scale[0],start+0.1,1.2);playBell(scale[2],start+2.0,1.0);playBell(scale[4],start+3.6,1.2);playBell(scale[1],start+5.2,0.8);playBell(scale[3],start+5.5,0.8);}let now=audioCtx.currentTime;bar(now);bgInterval=setInterval(()=>{now=audioCtx.currentTime;bar(now);},6000);}
+function sparkleSfx(){const now=audioCtx.currentTime,notes=[880,1174.66,1567.98];notes.forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine";o.frequency.setValueAtTime(f,now+i*0.06);g.gain.setValueAtTime(0.0001,now+i*0.06);g.gain.exponentialRampToValueAtTime(0.6,now+i*0.08);g.gain.exponentialRampToValueAtTime(0.0001,now+i*0.28);o.connect(g);g.connect(sfxGain);o.start(now+i*0.06);o.stop(now+i*0.3);});}
+function toggleMute(){isMuted=!isMuted;bgGain.gain.setValueAtTime(isMuted?0.0:0.12,audioCtx.currentTime);document.getElementById("muteBtn").textContent=isMuted?"🔇 Music: Off":"🔊 Music: On";}
+function startGame(){document.getElementById('welcome').classList.add('hidden');document.getElementById('mainApp').classList.remove('hidden');if(!audioCtx)initAudio();generateWords();}
+function generateWords(){const twoC=sampleRandom(characters,2),twoO=sampleRandom(objects,2),oneP=sampleRandom(places,1),all=shuffle([...twoC,...twoO,...oneP]);document.getElementById('words').innerHTML=all.map(w=>`<div class='word'>${w.emoji} ${w.word}</div>`).join('');document.getElementById('alwaysPhrase').textContent="…"+ALWAYS_PHRASE;if(audioCtx&&audioCtx.state!=="suspended")sparkleSfx();}
+function buildSentence(){const words=[...document.querySelectorAll('.word')].map(w=>w.textContent.replace(/[^a-zA-Z ]/g,'').trim());return words.join(', ')+' '+ALWAYS_PHRASE;}
+function speakWords(){const sentence=buildSentence();const u=new SpeechSynthesisUtterance(sentence);u.rate=0.9;window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}
+function copyWords(){const sentence=buildSentence();navigator.clipboard.writeText(sentence).then(()=>alert('Copied to clipboard!'));}
+</script>
+</body>
+</html>
